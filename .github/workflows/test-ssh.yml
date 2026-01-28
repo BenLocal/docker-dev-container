@@ -1,0 +1,78 @@
+name: Test SSH Login for Built Images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *" # optional: run daily at 03:00 UTC
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu-name: [noble, jammy, focal]
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install SSH client tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-client sshpass netcat-openbsd
+
+      - name: Pull image
+        env:
+          REGISTRY: ghcr.io
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+          OWNER_LC="$(echo "${OWNER}" | tr '[:upper:]' '[:lower:]')"
+          REPO="${REGISTRY}/${OWNER_LC}"
+          IMAGE="${REPO}/docker-dev-container:${{ matrix.ubuntu-name }}"
+          echo "Pulling image ${IMAGE}"
+          docker pull "${IMAGE}"
+
+      - name: Run container and test SSH login
+        env:
+          REGISTRY: ghcr.io
+          OWNER: ${{ github.repository_owner }}
+          ROOT_PWD: 1234
+        run: |
+          set -euo pipefail
+          OWNER_LC="$(echo "${OWNER}" | tr '[:upper:]' '[:lower:]')"
+          REPO="${REGISTRY}/${OWNER_LC}"
+          IMAGE="${REPO}/docker-dev-container:${{ matrix.ubuntu-name }}"
+          CONTAINER_NAME="test-ssh-${{ matrix.ubuntu-name }}"
+
+          echo "Starting container ${CONTAINER_NAME} from ${IMAGE}"
+          docker run -d --privileged --name "${CONTAINER_NAME}" -p 2222:22 -e ROOT_PWD="${ROOT_PWD}" "${IMAGE}"
+
+          echo "Waiting for sshd to be ready..."
+          for i in {1..30}; do
+            if nc -z 127.0.0.1 2222; then
+              echo "Port 2222 is open"
+              break
+            fi
+            echo "Port 2222 not open yet, retry $i/30"
+            sleep 2
+          done
+
+          echo "Testing SSH login to container..."
+          sshpass -p "${ROOT_PWD}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 2222 root@127.0.0.1 "echo SSH_OK"
+
+          echo "SSH login test succeeded for ${IMAGE}"
+
+          echo "Stopping and removing container"
+          docker rm -f "${CONTAINER_NAME}"
+

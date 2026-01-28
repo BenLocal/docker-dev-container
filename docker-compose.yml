@@ -2,7 +2,7 @@ services:
   dev:
     privileged: true
     container_name: dev
-    image: docker-dev-container:noble
+    image: ghcr.io/benlocal/docker-dev-container:noble
     ports:
       - "2222:22"
     restart: always
