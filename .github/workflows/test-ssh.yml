@@ -1,6 +1,10 @@
 name: Test SSH Login for Built Images
 
 on:
+  workflow_run:
+    workflows: ["Build and Push Docker Images to GHCR"]
+    types:
+      - completed
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *" # optional: run daily at 03:00 UTC
@@ -12,6 +16,8 @@ permissions:
 jobs:
   test-ssh:
     runs-on: ubuntu-latest
+    # Only run if triggered by workflow_run and the build-and-push workflow succeeded
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
 
     strategy:
       fail-fast: false
