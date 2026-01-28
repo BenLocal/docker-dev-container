@@ -69,7 +69,12 @@ jobs:
           done
 
           echo "Testing SSH login to container..."
-          sshpass -p "${ROOT_PWD}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p 2222 root@127.0.0.1 "echo SSH_OK"
+          sshpass -p "${ROOT_PWD}" ssh \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            -p 2222 root@127.0.0.1 "echo SSH_OK"
 
           echo "SSH login test succeeded for ${IMAGE}"
 
