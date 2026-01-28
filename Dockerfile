@@ -51,12 +51,7 @@ RUN curl -k -L -o go${GOLANG_VERSION}.linux-amd64.tar.gz ${GOLANG_DOWNLOAD_URL} 
     go version
 
 # rust
-ENV RUSTUP_DIST_SERVER=https://rsproxy.cn
-ENV RUSTUP_UPDATE_ROOT=https://rsproxy.cn/rustup
-RUN curl --proto '=https' --tlsv1.2 -sSf https://rsproxy.cn/rustup-init.sh > rustup-init.sh && \
-    chmod +x rustup-init.sh && \
-    ./rustup-init.sh -y && \
-    rm rustup-init.sh && \
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
     . "$HOME/.cargo/env" && \
     rustc --version && \
     cargo --version
@@ -103,14 +98,11 @@ RUN apt-get install -y locales && \
     rm -rf /var/lib/apt/lists/*
 ENV LC_ALL=en_US.UTF-8
 
-RUN curl -fsSL https://apt.cli.rs/pubkey.asc | tee -a /usr/share/keyrings/rust-tools.asc && \
-    curl -fsSL https://apt.cli.rs/rust-tools.list | tee /etc/apt/sources.list.d/rust-tools.list && \
-    apt install -y ripgrep zoxide && \
-    rm -rf /var/lib/apt/lists/* && \
-    echo 'export LC_ALL=en_US.UTF-8' >> ~/.bashrc && \
+ENV RUSTUP_DIST_SERVER=https://rsproxy.cn
+ENV RUSTUP_UPDATE_ROOT=https://rsproxy.cn/rustup
+RUN echo 'export LC_ALL=en_US.UTF-8' >> ~/.bashrc && \
     echo 'export RUSTUP_DIST_SERVER="https://rsproxy.cn"' >> ~/.bashrc && \
-    echo 'export RUSTUP_UPDATE_ROOT="https://rsproxy.cn/rustup"' >> ~/.bashrc && \
-    echo 'eval "$(zoxide init bash)"' >> ~/.bashrc
+    echo 'export RUSTUP_UPDATE_ROOT="https://rsproxy.cn/rustup"' >> ~/.bashrc
 
 
 ENTRYPOINT [ "/sbin/init", "--log-level=err" ]
