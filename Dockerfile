@@ -19,15 +19,23 @@ RUN apt-get update && \
 
 COPY ./config/docker/daemon.json /etc/docker/daemon.json
 
-# java
-RUN apt-get install -y maven openjdk-8-jdk \
-    openjdk-11-jdk \
-    openjdk-17-jdk \
-    openjdk-21-jdk \
-    openjdk-22-jdk \
-    && update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/bin/java \
-    && update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac \
-    && rm -rf /var/lib/apt/lists/*
+# java (install as many versions as are available on the given Ubuntu base image)
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y maven; \
+    for pkg in openjdk-8-jdk openjdk-11-jdk openjdk-17-jdk openjdk-21-jdk; do \
+    if apt-cache show "$pkg" >/dev/null 2>&1; then \
+    echo "Installing $pkg"; \
+    apt-get install -y "$pkg"; \
+    else \
+    echo "Package $pkg not available, skipping"; \
+    fi; \
+    done; \
+    if [ -x /usr/lib/jvm/java-8-openjdk-amd64/bin/java ]; then \
+    update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/bin/java; \
+    update-alternatives --set javac /usr/lib/jvm/java-8-openjdk-amd64/bin/javac; \
+    fi; \
+    rm -rf /var/lib/apt/lists/*
 
 # golang
 ENV PATH=/usr/local/go/bin:$PATH
