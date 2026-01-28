@@ -15,6 +15,11 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu-name: [noble, jammy, focal]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,5 +44,5 @@ jobs:
           OWNER_LC="$(echo "${OWNER}" | tr '[:upper:]' '[:lower:]')"
           REPO="${REGISTRY}/${OWNER_LC}"
           echo "Building and pushing images to ${REPO}"
-          ./build.sh all --repo "${REPO}" --push
+          ./build.sh "${{ matrix.ubuntu-name }}" --repo "${REPO}" --push
 
