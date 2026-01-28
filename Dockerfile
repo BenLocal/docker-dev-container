@@ -74,22 +74,21 @@ COPY ./config/sshd/sshd_config /etc/ssh/sshd_config
 RUN ln -sf /lib/systemd/system/ssh.service /etc/systemd/system/multi-user.target.wants/ssh.service
 EXPOSE 22
 
-# install .NET SDK (prefer 6.0, fall back to 8.0 if 6.0 is unavailable)
+# install .NET SDK
+# - noble (24.04): use dotnet-sdk-8.0
+# - jammy (22.04) / focal (20.04): use dotnet-sdk-6.0
 RUN set -eux; \
-    wget "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb; \
+    release="$(lsb_release -rs)"; \
+    wget "https://packages.microsoft.com/config/ubuntu/${release}/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb; \
     dpkg -i packages-microsoft-prod.deb; \
     rm packages-microsoft-prod.deb; \
     apt-get update; \
-    if apt-cache show dotnet-sdk-6.0 >/dev/null 2>&1; then \
-    echo "Installing dotnet-sdk-6.0"; \
-    apt-get install -y dotnet-sdk-6.0; \
-    elif apt-cache show dotnet-sdk-8.0 >/dev/null 2>&1; then \
-    echo "dotnet-sdk-6.0 not available, installing dotnet-sdk-8.0 instead"; \
-    apt-get install -y dotnet-sdk-8.0; \
-    else \
-    echo "No suitable dotnet-sdk (6.0 or 8.0) available for this Ubuntu version"; \
-    exit 1; \
+    dotnet_pkg="dotnet-sdk-8.0"; \
+    if [ "$release" = "22.04" ] || [ "$release" = "20.04" ]; then \
+    dotnet_pkg="dotnet-sdk-6.0"; \
     fi; \
+    echo "Installing ${dotnet_pkg} for Ubuntu ${release}"; \
+    apt-get install -y "${dotnet_pkg}"; \
     rm -rf /var/lib/apt/lists/*
 
 # set locale
