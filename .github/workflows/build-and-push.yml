@@ -35,7 +35,9 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
-          REPO="${REGISTRY}/${OWNER}"
+          # Docker repository names must be lowercase
+          OWNER_LC="$(echo "${OWNER}" | tr '[:upper:]' '[:lower:]')"
+          REPO="${REGISTRY}/${OWNER_LC}"
           echo "Building and pushing images to ${REPO}"
           ./build.sh all --repo "${REPO}" --push
 
