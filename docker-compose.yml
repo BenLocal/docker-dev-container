@@ -6,5 +6,3 @@ services:
     ports:
       - "2222:22"
     restart: always
-    environment:
-      - ROOT_PWD=1234

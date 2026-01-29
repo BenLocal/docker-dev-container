@@ -62,7 +62,7 @@ RUN git config --global core.longpaths true && \
     git config --global credential.helper store 
 
 # openssh
-ARG ROOT_PWD=1234
+ARG ROOT_PWD=123
 ENV ROOT_PWD=${ROOT_PWD}
 RUN apt-get update && \
     apt-get -y install openssh-server && \
