@@ -15,6 +15,7 @@ RUN apt-get update && \
     git \
     cmake \
     ca-certificates \
+    software-properties-common \
     && rm -rf /var/lib/apt/lists/*
 
 COPY ./config/docker/daemon.json /etc/docker/daemon.json
